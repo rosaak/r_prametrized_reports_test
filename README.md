@@ -1,2 +1,4 @@
-# r_prametrized_reports_test
-test
+## Parameterized reports
+
+- testing using gapminder data
+

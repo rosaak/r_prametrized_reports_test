@@ -1,0 +1,91 @@
+---
+title: "`r params$name`"
+author: "RP"
+output: 
+  html_document: 
+    toc: yes
+    number_sections: yes
+    keep_md: no
+date:  "`r Sys.time()`"
+params:
+  name: "Test"
+  ymin: 1950
+  ymax: 2021
+  echoes: FALSE
+---
+
+
+# GapMinder Data Modeling - Testing Parametrized Markdown Rendering
+- things to remember 
+  - params: don't put gap between 
+  - all echoes turn off 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=params$echoes)
+```
+
+```{r, include=FALSE}
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(tidyr)
+  library(broom)
+  library(gapminder)
+  library(DT)
+  })
+
+ymin = as.integer(params$ymin)
+ymax = as.integer(params$ymax)
+```
+
+## Describe Filterd Data from "`r ymin`" to "`r ymax`"
+
+```{r 'data describe'}
+data(gapminder)
+
+gapminder_filtered = gapminder %>%
+   dplyr::filter(year > ymin & year < ymax )
+
+gapminder_filtered %>% DT::datatable(rownames = FALSE,extensions='Buttons', 
+                            options = list( dom = 'Bfrtip',
+                                           buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                                           )
+)
+```
+
+## Plot 
+
+```{r}
+
+ggplot(subset(gapminder_filtered),
+       aes(x = year, y = lifeExp, group = country, color = country)) +
+  geom_line(lwd = 1, show.legend = FALSE) + facet_wrap(~ continent) +
+  scale_color_manual(values = country_colors) +
+  theme_bw() + theme(strip.text = element_text(size = rel(1.1)))
+```
+
+
+## Plot Pop vs Year
+
+```{r 'point-plot', echo=FALSE}
+
+gapminder_filtered %>%
+    ggplot(aes(x=year, y=pop, color=continent)) +
+      geom_point() +
+     theme_classic() +
+      theme(legend.position = "bottom") +
+      ggtitle(paste0("pop vs year from ", ymin, " to ", ymax))
+```
+
+## Model Building "`r ymin`" to "`r params$ymax`"
+
+```{r 'run-model'}
+model = lm(pop ~ year, gapminder_filtered)
+```
+
+```{r 'display'}
+summary(model) %>% tidy() %>% knitr::kable()
+```
+
+```{r 'model residual plot'}
+plot(model)
+```
